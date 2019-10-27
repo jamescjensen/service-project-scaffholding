@@ -8,14 +8,15 @@
   "license": "",
   "main": "app.js",
   "dependencies": {
-    "express": "^4.12.3",
-    "swagger-express-mw": "^0.1.0"
+    "config": "^3.2.4",
+    "express": "^4.17.1",
+    "swagger-tools": "^0.10.4"
   },
   "devDependencies": {
     "eslint": "^6.6.0",
     "eslint-config-google": "^0.14.0",
-    "should": "^7.1.0",
-    "supertest": "^1.0.0"
+    "should": "^13.2.3",
+    "supertest": "^4.0.2"
   },
   "scripts": {
     "start": "node app.js",

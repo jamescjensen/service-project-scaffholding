@@ -1,23 +1,40 @@
 'use strict';
 
-const SwaggerExpress = require('swagger-express-mw');
 const app = require('express')();
-module.exports = app; // for testing
+const config = require('config');
+const fs = require('fs');
+const http = require('http');
+const path = require('path');
+const swaggerTools = require('swagger-tools');
+const YAML = require('js-yaml');
 
-const config = require('./lib/config');
+const serverPort = config.get('port');
 
-SwaggerExpress.create(config, function(err, swaggerExpress) {
-  if (err) {
-    throw err;
-  }
+// swaggerRouter configuration
+const options = {
+  controllers: './api/controllers',
+  useStubs: config.util.getEnv('NODE_ENV') === 'development' ? true : false,
+};
 
-  // install middleware
-  swaggerExpress.register(app);
+// eslint-disable-next-line no-undef
+const swaggerPath = path.join(__dirname, 'api', 'swagger', 'swagger.yaml');
+const swaggerDoc = YAML.safeLoad(fs.readFileSync(swaggerPath, 'utf8'));
 
-  const port = process.env.PORT || 10010;
-  app.listen(port);
+// Initialize the Swagger middleware
+swaggerTools.initializeMiddleware(swaggerDoc, function(middleware) {
+  app.use(middleware.swaggerMetadata());
 
-  if (swaggerExpress.runner.swagger.paths['/hello']) {
-    console.log('try this:\ncurl http://127.0.0.1:' + port + '/hello?name=Scott');
-  }
+  // Validate Swagger requests
+  app.use(middleware.swaggerValidator());
+
+  // Route validated requests to appropriate controller
+  app.use(middleware.swaggerRouter(options));
+
+  // Serve the Swagger documents and Swagger UI
+  app.use(middleware.swaggerUi());
+
+  // Start the server
+  http.createServer(app).listen(serverPort, function() {
+    console.log('Your server is listening on port %d (http://localhost:%d)', serverPort, serverPort);
+  });
 });
